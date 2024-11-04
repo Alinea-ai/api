@@ -1,16 +1,19 @@
-"""
-ASGI config for alinea project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
-"""
-
+# alinea/asgi.py
 import os
-
+import django
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
 from django.core.asgi import get_asgi_application
+import alinea_api.routing  # Import your app's routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'alinea.settings')
+django.setup()
 
-application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            alinea_api.routing.websocket_urlpatterns
+        )
+    ),
+})
