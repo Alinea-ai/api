@@ -41,7 +41,7 @@ MOOD_CHOICES = [
 DATA_TYPE_CHOICES = [
     ('personal_info', 'Personal Information'),
     ('medical_info', 'Medical Information'),
-    ('dental_questionnaire', 'Dental Questionnaire'),
+    ('dental_info', 'Dental Information'),
     ('psychological_info', 'Psychological Information'),
 ]
 

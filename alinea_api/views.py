@@ -1,4 +1,7 @@
 from rest_framework import viewsets, permissions
+from django.shortcuts import render
+
+
 from .models import (
     Entity,
     AccessRequest,
@@ -28,3 +31,10 @@ class AccessRequestItemViewSet(viewsets.ModelViewSet):
     queryset = AccessRequestItem.objects.all()
     serializer_class = AccessRequestItemSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+def websocket_test(request):
+    return render(request, 'doctor_dashboard.html')
+
+
+

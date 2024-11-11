@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #dataTypeSelector {
+            width: 250px;
+            height: 120px;
+        }
+        #messagesList {
+            list-style-type: none;
+            padding: 0;
+        }
+        #messagesList li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+
+    <!-- Multiple Option Selector -->
+    <div>
+        <label for="dataTypeSelector">Select Data Types:</label><br>
+        <select id="dataTypeSelector" multiple>
+            <option value="personal_info">Personal Information</option>
+            <option value="medical_info">Medical Information</option>
+            <option value="dental_info">Dental Information</option>
+            <option value="psychological_info">Psychological Information</option>
+        </select>
+    </div>
+
+    <!-- Send Data Button -->
+    <div>
+        <button id="sendDataButton">Send Selected Data Types</button>
+    </div>
+
+    <!-- Messages Display -->
+    <h2>Messages:</h2>
+    <ul id="messagesList"></ul>
+
+    <!-- WebSocket Script -->
+    <script>
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const wsUrl = wsProtocol + window.location.host + '/ws/concent/';
+        const socket = new WebSocket(wsUrl);
+
+        // Log the status of the WebSocket connection
+        socket.onopen = function(e) {
+            console.log('WebSocket connection established.');
+        };
+
+        socket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+        };
+
+        socket.onclose = function(e) {
+            console.log('WebSocket connection closed.');
+        };
+
+        // Handle incoming messages
+        socket.onmessage = function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                console.log('Message received:', data);
+
+                // Display the received message
+                const messagesList = document.getElementById('messagesList');
+                const newMessage = document.createElement('li');
+                newMessage.textContent = 'Server: ' + JSON.stringify(data);
+                newMessage.style.color = 'blue';
+                messagesList.appendChild(newMessage);
+            } catch (error) {
+                console.error('Error parsing message:', error);
+            }
+        };
+
+        // Handle sending selected data types
+        const sendDataButton = document.getElementById('sendDataButton');
+        const dataTypeSelector = document.getElementById('dataTypeSelector');
+
+        sendDataButton.onclick = function() {
+            if (socket.readyState === WebSocket.OPEN) {
+                const selectedDataTypes = Array.from(dataTypeSelector.selectedOptions).map(option => option.value);
+                if (selectedDataTypes.length > 0) {
+                    const data = {
+                        'selected_data_types': selectedDataTypes
+                    };
+
+                    socket.send(JSON.stringify(data));
+
+                    const messagesList = document.getElementById('messagesList');
+                    const newMessage = document.createElement('li');
+                    newMessage.textContent = 'You: ' + JSON.stringify(data);
+                    newMessage.style.color = 'green';
+                    messagesList.appendChild(newMessage);
+                } else {
+                    alert('Please select at least one data type.');
+                }
+            } else {
+                alert('WebSocket connection is not open.');
+            }
+        };
+    </script>
+</body>
+</html>
