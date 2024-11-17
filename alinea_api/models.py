@@ -41,7 +41,7 @@ MOOD_CHOICES = [
 DATA_TYPE_CHOICES = [
     ('personal_info', 'Personal Information'),
     ('medical_info', 'Medical Information'),
-    ('dental_info', 'Dental Information'),
+    ('dental_questionnaire', 'Dental Questionnaire'),
     ('psychological_info', 'Psychological Information'),
 ]
 
@@ -71,19 +71,19 @@ class AccessRequest(models.Model):
         return f"AccessRequest by {self.entity} for {self.user}"
 
 
-class AccessRequestItem(models.Model):
-    access_request = models.ForeignKey(
-        AccessRequest,
-        on_delete=models.CASCADE,
-        related_name='items'
-    )
-    data_type = models.CharField(max_length=50, choices=DATA_TYPE_CHOICES)
-    approved = models.BooleanField(default=False)
-    approved_at = models.DateTimeField(null=True, blank=True)
+STATUS_CHOICES = [
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
+]
 
-    def __str__(self):
-        status = 'Approved' if self.approved else 'Pending'
-        return f"{self.get_data_type_display()} access {status} for {self.access_request.user.username}"
+class AccessRequestItem(models.Model):
+    access_request = models.ForeignKey(AccessRequest, on_delete=models.CASCADE, related_name='items')
+    data_type = models.CharField(max_length=50, choices=DATA_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status_set_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    rejection_reason = models.TextField(null=True, blank=True)
 
 
 class UserPersonalInformation(models.Model):
@@ -124,8 +124,7 @@ class UserMedicalInfo(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Medical Information"
 
-
-class DentalInfo(models.Model):
+class DentalQuestionnaire(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_dental_visit = models.DateField(null=True, blank=True)
     reason_for_last_visit = models.CharField(max_length=255, blank=True)
@@ -135,7 +134,6 @@ class DentalInfo(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Dental Questionnaire"
-
 
 class PsychologicalInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -173,7 +171,6 @@ class PsychologicalInfo(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Psychological Information"
-
 
 class MedicalRecord(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

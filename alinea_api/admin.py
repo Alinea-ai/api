@@ -3,9 +3,9 @@ from .models import (
     Entity,
     AccessRequest,
     AccessRequestItem,
+    DentalQuestionnaire,
     UserPersonalInformation,
     UserMedicalInfo,
-    DentalInfo,
     PsychologicalInfo,
     MedicalRecord,
 )
@@ -27,6 +27,6 @@ admin.site.register(AccessRequest)
 admin.site.register(AccessRequestItem)
 admin.site.register(UserPersonalInformation)
 admin.site.register(UserMedicalInfo)
-admin.site.register(DentalInfo)
+admin.site.register(DentalQuestionnaire)
 admin.site.register(PsychologicalInfo)
 admin.site.register(MedicalRecord)

@@ -1,4 +1,3 @@
-# alinea_api/consumers.py
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
@@ -6,15 +5,36 @@ import json
 from alinea_api.models import Entity, AccessRequest, AccessRequestItem, User
 
 
-# alinea_api/consumers.py
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         print("WebSocket connect")
+
+        # Get the entity (e.g., entity with ID 1)
+        entity = await self.get_dummy_entity()
+        self.entity_id = entity.id
+
+        # Create the group name based on the entity ID
+        self.group_name = f'entity_{self.entity_id}_group'
+
+        # Add the channel to the group
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+
         await self.accept()
         await self.send(text_data=json.dumps({'message': 'Connected to WebSocket'}))
+        print(f"Added to group: {self.group_name}")
 
     async def disconnect(self, close_code):
         print(f"WebSocket disconnect: {close_code}")
+
+        # Remove the channel from the group
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+        print(f"Removed from group: {self.group_name}")
 
     async def receive(self, text_data):
         print(f"WebSocket receive: {text_data}")
@@ -25,7 +45,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             # Get the authenticated user
             user = await self.get_dummy_user()
             entity = await self.get_dummy_entity()
-
 
             # Create AccessRequest
             access_request = await database_sync_to_async(AccessRequest.objects.create)(
@@ -51,15 +70,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             print(f"Created AccessRequest {access_request.id} for user {user.username}")
 
         else:
-            response = {'error': 'User is not authenticated.'}
+            response = {'error': 'Invalid data received.'}
             await self.send(text_data=json.dumps(response))
-            print("Unauthenticated user attempted to create an access request.")
+            print("Invalid data received.")
+
+    async def access_request_item_event(self, event):
+        # Handle the event sent to the group
+        message = event['message']
+        await self.send(text_data=message)
+        print(f"Event received: {message}")
 
     @database_sync_to_async
     def get_dummy_user(self):
         # Get or create a dummy user with pk=1
         try:
-            user = User.objects.get(pk=2)
+            user = User.objects.get(pk=1)
         except User.DoesNotExist:
             user = User.objects.create_user(username='dummyuser', password='password')
             print("Created dummy user.")

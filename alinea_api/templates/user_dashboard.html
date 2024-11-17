@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Access Requests</title>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #connection-status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+        #requests {
+            margin-top: 20px;
+        }
+        .access-request {
+            border: 2px solid #000;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .access-request h2 {
+            margin: 0;
+        }
+        .request-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .request-item h3 {
+            margin: 0;
+        }
+        .request-item button {
+            margin-top: 10px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Access Requests</h1>
+    <div id="connection-status">
+        Connecting to WebSocket...
+    </div>
+    <div id="requests">
+        <!-- Access requests will be displayed here -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const requestsDiv = document.getElementById('requests');
+            const connectionStatusDiv = document.getElementById('connection-status');
+
+            function displayAccessRequest(accessRequest) {
+                let accessRequestDiv = document.querySelector(`.access-request[data-request-id="${accessRequest.id}"]`);
+
+                if (!accessRequestDiv) {
+                    accessRequestDiv = document.createElement('div');
+                    accessRequestDiv.classList.add('access-request');
+                    accessRequestDiv.setAttribute('data-request-id', accessRequest.id);
+
+                    const title = document.createElement('h2');
+                    title.textContent = `Access Request ID: ${accessRequest.id}`;
+                    accessRequestDiv.appendChild(title);
+
+                    const entityInfo = document.createElement('p');
+                    entityInfo.textContent = `Entity: ${accessRequest.entity_name}`;
+                    accessRequestDiv.appendChild(entityInfo);
+
+                    const purposeInfo = document.createElement('p');
+                    purposeInfo.textContent = `Purpose: ${accessRequest.purpose}`;
+                    accessRequestDiv.appendChild(purposeInfo);
+
+                    const requestedAtInfo = document.createElement('p');
+                    requestedAtInfo.textContent = `Requested At: ${new Date(accessRequest.requested_at).toLocaleString()}`;
+                    accessRequestDiv.appendChild(requestedAtInfo);
+
+                    const itemsContainer = document.createElement('div');
+                    itemsContainer.classList.add('items-container');
+                    accessRequestDiv.appendChild(itemsContainer);
+
+                    requestsDiv.appendChild(accessRequestDiv);
+                }
+
+                fetchAccessRequestItems(accessRequest.id);
+            }
+
+            function fetchAccessRequestItems(accessRequestId) {
+                fetch('/api/access_request_items/?access_request_id=' + accessRequestId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.items) {
+                            displayAccessRequestItems(accessRequestId, data.items);
+                        } else if (data.error) {
+                            console.error('Error:', data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching access request items:', error);
+                    });
+            }
+
+            function displayAccessRequestItems(accessRequestId, items) {
+                let accessRequestDiv = document.querySelector(`.access-request[data-request-id="${accessRequestId}"]`);
+                if (!accessRequestDiv) {
+                    console.error('Access request div not found for ID:', accessRequestId);
+                    return;
+                }
+
+                const itemsContainer = accessRequestDiv.querySelector('.items-container');
+                itemsContainer.innerHTML = '';
+
+                items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('request-item');
+                    itemDiv.setAttribute('data-item-id', item.id);
+
+                    const title = document.createElement('h3');
+                    title.textContent = `Data Type: ${item.data_type_display}`;
+                    itemDiv.appendChild(title);
+
+                    const status = document.createElement('p');
+                    status.textContent = `Status: ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}`;
+                    itemDiv.appendChild(status);
+
+                    if (item.status === 'pending') {
+                        const approveButton = document.createElement('button');
+                        approveButton.textContent = 'Approve';
+                        approveButton.addEventListener('click', function() {
+                            setAccessRequestItemStatus(item.id, 'approved');
+                        });
+                        itemDiv.appendChild(approveButton);
+
+                        const rejectButton = document.createElement('button');
+                        rejectButton.textContent = 'Reject';
+                        rejectButton.addEventListener('click', function() {
+                            setAccessRequestItemStatus(item.id, 'rejected');
+                        });
+                        itemDiv.appendChild(rejectButton);
+                    }
+
+                    itemsContainer.appendChild(itemDiv);
+                });
+            }
+
+            function setAccessRequestItemStatus(itemId, status) {
+                fetch('/api/set_access_request_item_status/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `item_id=${itemId}&status=${status}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const itemDiv = document.querySelector(`.request-item[data-item-id="${itemId}"]`);
+                        if (itemDiv) {
+                            const accessRequestId = itemDiv.closest('.access-request').getAttribute('data-request-id');
+                            fetchAccessRequestItems(accessRequestId);
+                        }
+                    } else {
+                        console.error('Error setting access request item status:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error setting access request item status:', error);
+                });
+            }
+
+            function initWebSocket() {
+                const socket = new WebSocket('ws://' + window.location.host + '/ws/user_concent/?user_id=1');
+
+                socket.onopen = function(e) {
+                    console.log('WebSocket connection established.');
+                    connectionStatusDiv.textContent = 'Connected to WebSocket.';
+                    connectionStatusDiv.style.color = 'green';
+                };
+
+                socket.onmessage = function(e) {
+                    try {
+                        const data = JSON.parse(e.data);
+                        console.log('Received data:', data);
+
+                        if ((data.action === 'created' || data.action === 'updated') && data.access_request) {
+                            displayAccessRequest(data.access_request);
+                        } else {
+                            console.warn('Received unexpected data format:', data);
+                        }
+                    } catch (error) {
+                        console.error('Error in onmessage handler:', error);
+                    }
+                };
+
+                socket.onclose = function(e) {
+                    console.log('WebSocket connection closed.');
+                    connectionStatusDiv.textContent = 'WebSocket connection closed.';
+                    connectionStatusDiv.style.color = 'red';
+                };
+
+                socket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    connectionStatusDiv.textContent = 'WebSocket error occurred.';
+                    connectionStatusDiv.style.color = 'red';
+                };
+            }
+
+            initWebSocket();
+        });
+    </script>
+</body>
+</html>

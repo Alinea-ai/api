@@ -5,7 +5,7 @@ from .models import (
     AccessRequestItem,
     UserPersonalInformation,
     UserMedicalInfo,
-    DentalInfo,
+    DentalQuestionnaire,
     PsychologicalInfo,
     MedicalRecord,
 )

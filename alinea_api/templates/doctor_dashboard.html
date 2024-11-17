@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>WebSocket Test Page</title>
+    <title>Entity Dashboard (Doctors)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,11 +45,14 @@
 
     <!-- WebSocket Script -->
     <script>
+        const messagesList = document.getElementById('messagesList');
+        const sendDataButton = document.getElementById('sendDataButton');
+        const dataTypeSelector = document.getElementById('dataTypeSelector');
+
         const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const wsUrl = wsProtocol + window.location.host + '/ws/concent/';
         const socket = new WebSocket(wsUrl);
 
-        // Log the status of the WebSocket connection
         socket.onopen = function(e) {
             console.log('WebSocket connection established.');
         };
@@ -68,21 +71,24 @@
                 const data = JSON.parse(e.data);
                 console.log('Message received:', data);
 
-                // Display the received message
-                const messagesList = document.getElementById('messagesList');
-                const newMessage = document.createElement('li');
-                newMessage.textContent = 'Server: ' + JSON.stringify(data);
-                newMessage.style.color = 'blue';
-                messagesList.appendChild(newMessage);
+                if (data.action === 'status_updated' && data.access_request_item) {
+                    const item = data.access_request_item;
+                    const newMessage = document.createElement('li');
+                    newMessage.textContent = `Access Request Item Updated - ID: ${item.id}, Data Type: ${item.data_type_display}, Status: ${item.status}`;
+                    newMessage.style.color = 'blue';
+                    messagesList.appendChild(newMessage);
+                } else {
+                    const newMessage = document.createElement('li');
+                    newMessage.textContent = 'Server: ' + JSON.stringify(data);
+                    newMessage.style.color = 'blue';
+                    messagesList.appendChild(newMessage);
+                }
             } catch (error) {
                 console.error('Error parsing message:', error);
             }
         };
 
         // Handle sending selected data types
-        const sendDataButton = document.getElementById('sendDataButton');
-        const dataTypeSelector = document.getElementById('dataTypeSelector');
-
         sendDataButton.onclick = function() {
             if (socket.readyState === WebSocket.OPEN) {
                 const selectedDataTypes = Array.from(dataTypeSelector.selectedOptions).map(option => option.value);
@@ -93,7 +99,6 @@
 
                     socket.send(JSON.stringify(data));
 
-                    const messagesList = document.getElementById('messagesList');
                     const newMessage = document.createElement('li');
                     newMessage.textContent = 'You: ' + JSON.stringify(data);
                     newMessage.style.color = 'green';
