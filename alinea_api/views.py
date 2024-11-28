@@ -3,10 +3,17 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import api_view
+from drf_yasg import openapi
+from rest_framework.response import Response
 
-from .models import (Entity, AccessRequest, AccessRequestItem, )
-from .serializers import (EntitySerializer, AccessRequestSerializer, AccessRequestItemSerializer, )
+from .models import (Entity, AccessRequest, AccessRequestItem, UserPersonalInformation,
+                     UserMedicalInfo, PsychologicalInfo, DentalQuestionnaire, )
+from .serializers import (EntitySerializer, AccessRequestSerializer, AccessRequestItemSerializer,
+                          UserPersonalInformationSerializer, UserMedicalInfoSerializer,
+                          DentalQuestionnaireSerializer, PsychologicalInfoSerializer, )
 
 
 class EntityViewSet(viewsets.ModelViewSet):
@@ -33,7 +40,19 @@ def websocket_test(request):
 def access_requests_view(request):
     return render(request, 'user_dashboard.html')
 
-
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['item_id', 'status'],
+        properties={
+            'item_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the AccessRequestItem'),
+            'status': openapi.Schema(type=openapi.TYPE_STRING, description='New status ("approved" or "rejected")'),
+        },
+    ),
+    responses={200: 'Success'}
+)
+@api_view(['POST'])
 @csrf_exempt
 def set_access_request_item_status(request):
     if request.method == 'POST':
@@ -57,7 +76,14 @@ def set_access_request_item_status(request):
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
 
-
+@swagger_auto_schema(
+    method='get',
+    manual_parameters=[
+        openapi.Parameter('access_request_id', openapi.IN_QUERY, description="ID of the access request", type=openapi.TYPE_INTEGER)
+    ],
+    responses={200: AccessRequestItemSerializer(many=True)}
+)
+@api_view(['GET'])
 def get_access_request_items(request):
     access_request_id = request.GET.get('access_request_id')
 
@@ -85,3 +111,44 @@ def get_access_request_items(request):
         item_data_list.append(item_data)
 
     return JsonResponse({'items': item_data_list})
+
+@api_view(['GET'])
+def get_documents(request, access_request_id):
+    DATA_TYPE_MODEL_SERIALIZER_MAP = {
+        'personal_info': (UserPersonalInformation, UserPersonalInformationSerializer),
+        'medical_info': (UserMedicalInfo, UserMedicalInfoSerializer),
+        'dental_info': (DentalQuestionnaire, DentalQuestionnaireSerializer),
+        'psychological_info': (PsychologicalInfo, PsychologicalInfoSerializer),
+    }
+    if not access_request_id:
+        return HttpResponseBadRequest('Missing access_request_id parameter.')
+    access_request_obj =  AccessRequest.objects.get(id=access_request_id)
+    if not access_request_obj:
+        return HttpResponseBadRequest('Request not found')
+    data_by_status = {
+        'pending': [],
+        'approved': [],
+        'rejected': [],
+    }
+    access_requests = AccessRequestItem.objects.filter(access_request_id=access_request_id)
+    for access_request in access_requests:
+        data_by_status[access_request.status].append(access_request.data_type)
+    user = access_request_obj.user
+    data = {}
+    for data_type in data_by_status['approved']:
+        model_class, serializer_class = DATA_TYPE_MODEL_SERIALIZER_MAP.get(data_type)
+        if model_class and serializer_class:
+            try:
+                instance = model_class.objects.get(user_id=user.id)
+                serializer = serializer_class(instance)
+                data[data_type] = serializer.data
+            except model_class.DoesNotExist:
+                data[data_type] = None
+    data_by_status["approved"] = data
+    return JsonResponse({"data": data_by_status})
+
+
+
+
+
+

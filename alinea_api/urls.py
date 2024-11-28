@@ -8,7 +8,7 @@ from .views import (
     AccessRequestViewSet,
     AccessRequestItemViewSet,
     set_access_request_item_status,
-    get_access_request_items,
+    get_access_request_items, get_documents,
 )
 
 router = routers.DefaultRouter()
@@ -20,4 +20,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('set_access_request_item_status/', set_access_request_item_status, name='set_access_request_item_status'),
     path('access_request_items/', get_access_request_items, name='get_access_request_items'),
+    path('<access_request_id>/documents/', get_documents, name='get_access_request_items'),
 ]

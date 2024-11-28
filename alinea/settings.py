@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_yasg',
     'channels',
-    'alinea_api'
+    'alinea_api',
+    'singularity'
 ]
 
 MIDDLEWARE = [

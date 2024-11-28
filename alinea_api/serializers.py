@@ -25,3 +25,22 @@ class AccessRequestItemSerializer(serializers.ModelSerializer):
         model = AccessRequestItem
         fields = '__all__'
 
+class UserPersonalInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPersonalInformation
+        fields = '__all__'
+
+class UserMedicalInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserMedicalInfo
+        fields = '__all__'
+
+class DentalQuestionnaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DentalQuestionnaire
+        fields = '__all__'
+
+class PsychologicalInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PsychologicalInfo
+        fields = '__all__'
