@@ -4,12 +4,9 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
-from alinea_api.views import (
-    websocket_test,
-    access_requests_view,
-    get_access_request_items,
-    set_access_request_item_status
-)
+from alinea_api.views.access_request_item import set_access_request_item_status, \
+    get_access_request_items
+from alinea_api.views.test import websocket_test, access_requests_view
 
 schema_view = get_schema_view(
    openapi.Info(
