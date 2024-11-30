@@ -21,6 +21,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('alinea_api.urls')),
+    path('singularity/', include('singularity.urls')),
     path('websocket-test/', websocket_test, name='websocket_test'),
     path('user_websocket_test/', access_requests_view, name='user_websocket_test' ),
 
