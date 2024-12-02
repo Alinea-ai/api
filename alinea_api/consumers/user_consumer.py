@@ -3,7 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
 
-from alinea_api.models import Entity, User
+from alinea_api.models import Entity, CustomUser
 
 
 class UserNotificationConsumer(AsyncWebsocketConsumer):
@@ -35,9 +35,9 @@ class UserNotificationConsumer(AsyncWebsocketConsumer):
     def get_dummy_user(self):
         # Get or create a dummy user with pk=1
         try:
-            user = User.objects.get(pk=1)
-        except User.DoesNotExist:
-            user = User.objects.create_user(username='dummyuser', password='password')
+            user = CustomUser.objects.get(pk=1)
+        except CustomUser.DoesNotExist:
+            user = CustomUser.objects.create_user(username='dummyuser', password='password')
             print("Created dummy user.")
         return user
 

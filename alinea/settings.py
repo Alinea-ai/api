@@ -152,3 +152,6 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'SECURITY_DEFINITIONS': None,
 }
+
+
+AUTH_USER_MODEL = 'alinea_api.CustomUser'

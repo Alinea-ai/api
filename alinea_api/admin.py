@@ -1,32 +1,37 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth import get_user_model
+
 from .models import (
     Entity,
     AccessRequest,
     AccessRequestItem,
-    DentalQuestionnaire,
-    UserPersonalInformation,
-    UserMedicalInfo,
-    PsychologicalInfo,
-    MedicalRecord,
+    Visits,
+    Template,
+    DefaultField,
+    # Ensure CustomUser is imported if not using get_user_model()
+    # CustomUser
 )
 
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
+User = get_user_model()  # This returns your CustomUser model
 
-class UserAdmin(BaseUserAdmin):
+class CustomUserAdmin(BaseUserAdmin):
+    model = User
     list_display = ('id', 'username', 'email', 'first_name', 'last_name', 'is_staff')
     search_fields = ('id', 'username', 'email', 'first_name', 'last_name')
+    ordering = ('id',)
+    # If you have custom fields, add them to fieldsets
+    fieldsets = BaseUserAdmin.fieldsets + (
+        (None, {'fields': ('phone_number',)}),
+    )
 
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
+# No need to unregister; just register your custom user model
+admin.site.register(User, CustomUserAdmin)
 
-
+# Register other models
 admin.site.register(Entity)
 admin.site.register(AccessRequest)
 admin.site.register(AccessRequestItem)
-admin.site.register(UserPersonalInformation)
-admin.site.register(UserMedicalInfo)
-admin.site.register(DentalQuestionnaire)
-admin.site.register(PsychologicalInfo)
-admin.site.register(MedicalRecord)
+admin.site.register(Visits)
+admin.site.register(Template)
+admin.site.register(DefaultField)
