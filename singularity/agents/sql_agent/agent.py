@@ -1,39 +1,33 @@
 from typing import Any
+from functools import lru_cache
 
 from langchain_community.utilities.sql_database import SQLDatabase
-from sqlalchemy.exc import OperationalError
 
-from src.agents.agent_base import AgentBase
-from src.agents.sql_agent.exceptions import (
-    SqlAgentConnectionError,
-    SqlAgentResponseParserError,
-    SqlAgentUnexpectedError,
-)
-from src.common.config import LOCAL_CONFIG
-from src.common.logger import Logger
-from src.models.config import Config
+from singularity.agents.agent_base import AgentBase
+from singularity.agents.sql_agent.exceptions import SqlAgentConnectionError, \
+    SqlAgentResponseParserError, SqlAgentUnexpectedError
 
 
 class SqlAgent(AgentBase):
     def __init__(self, model_name: str = 'gpt-4', verbose: bool = False):
         super().__init__(model_name)
-        self.logger = Logger(self)
         self.schema = None
-
-    def get_sql_connect(self, config: Config) -> SQLDatabase | None:
+    @lru_cache(maxsize=1024)
+    def get_sql_connect(self) -> SQLDatabase | None:
+        uri = f'sqlite:////Users/latrealus/Documents/gits/api/db.sqlite3'
         try:
-            return SQLDatabase.from_uri(config.get_database_uri())
-        except OperationalError as e:
-            raise SqlAgentConnectionError(f'Failed to connect to: {config.get_database_uri()}, {e}')
+            return SQLDatabase.from_uri(uri)
+        except Exception as e:
+            raise SqlAgentConnectionError(f'Failed to connect to: {uri}, {e}')
 
-    def pre_exec_prompt(self, query: str, db_context: dict[str, Any], config: Config) -> str:
+    def pre_exec_prompt(self, query: str, db_context: dict[str, Any] = None) -> str:
         # TODO: Let's move this to use Jinja
         prompt = f"""
             You are sql expert I need you translate this human query into a SQL language.
 
-            Based on human query, database type and database context
+            Based on human query, database type and database context if it is not None
             human query: {query}
-            database type: {config.type.value}
+            database type: sqllite
             database context: {db_context}
 
             Important always make sure to wrap your response with the symbol @
@@ -85,14 +79,14 @@ class SqlAgent(AgentBase):
     def query_model(self, prompt: str):
         return self.model.invoke(prompt)
 
-    def translate_to_sql(self, config: Config, sql_conn, human_query: str) -> dict:
+    def translate_to_sql(self, sql_conn, human_query: str, use_db_schema: bool = True) -> dict:
+        schema = None
         if self.schema is None:
             self.schema = sql_conn.get_context()
-            print(self.schema)
-        prompt = self.pre_exec_prompt(human_query, self.schema, config=config)
+        if use_db_schema:
+            schema = self.schema
+        prompt = self.pre_exec_prompt(human_query, schema)
         model_response = self.query_model(prompt)
-        # TODO: we can access token usage like so: model_response.token_usage["total_tokens"]
-        #  let's save it along with prompt, query, and response as metadata
         try:
             return self.parse_generic(model_response.content)
         except Exception as e:
@@ -103,16 +97,16 @@ class SqlAgent(AgentBase):
 
         return self.query_model(prompt)
 
-    def invoke(self, query: str, db_config: Config = None) -> tuple[str, str | None]:
-        self.logger.info(f'Starting with prompt: {query}')
-        sql_conn = self.get_sql_connect(db_config or LOCAL_CONFIG)
+    def invoke(self, query: str, db_config = None) -> tuple[str, str | None]:
+        print(f'Starting with prompt: {query}')
+        sql_conn = self.get_sql_connect()
 
         try:
-            sql_query = self.translate_to_sql(config=db_config, sql_conn=sql_conn, human_query=query)
+            sql_query = self.translate_to_sql(sql_conn=sql_conn, human_query=query)
             if 'error' in sql_query:
                 return sql_query['message'], None
 
-            self.logger.info(f"SQL Query: {sql_query['sql']}")
+            print(f"SQL Query: {sql_query['sql']}")
             results = sql_conn.run(sql_query['sql'])
             response = self.analyze_response(query, results, sql_query['language'])
 

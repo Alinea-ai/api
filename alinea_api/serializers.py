@@ -1,14 +1,14 @@
+from datetime import datetime
+
+from bson import ObjectId
 from rest_framework import serializers
 from .models import (
     Entity,
     AccessRequest,
     AccessRequestItem,
-    UserPersonalInformation,
-    UserMedicalInfo,
-    DentalQuestionnaire,
-    PsychologicalInfo,
-    MedicalRecord,
+    CustomUser,
 )
+from rest_framework import serializers
 
 class EntitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,22 +25,22 @@ class AccessRequestItemSerializer(serializers.ModelSerializer):
         model = AccessRequestItem
         fields = '__all__'
 
-class UserPersonalInformationSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserPersonalInformation
-        fields = '__all__'
+        model = CustomUser
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number']
 
-class UserMedicalInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserMedicalInfo
-        fields = '__all__'
-
-class DentalQuestionnaireSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DentalQuestionnaire
-        fields = '__all__'
-
-class PsychologicalInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PsychologicalInfo
-        fields = '__all__'
+def serialize_document(doc):
+    """
+    Recursively serializes a MongoDB document to ensure all fields are JSON serializable.
+    """
+    if isinstance(doc, dict):
+        return {key: serialize_document(value) for key, value in doc.items()}
+    elif isinstance(doc, list):
+        return [serialize_document(item) for item in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)  # Convert ObjectId to string
+    elif isinstance(doc, datetime):
+        return doc.isoformat()  # Convert datetime to ISO format
+    else:
+        return doc

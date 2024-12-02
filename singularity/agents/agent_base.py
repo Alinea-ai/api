@@ -4,18 +4,15 @@ from abc import ABC, abstractmethod
 
 from langchain_openai import ChatOpenAI
 
-from src.common.config import singularity_config
-from src.common.types import ModelType
 
 
 class AgentBase(ABC):
     TEMPERATURE = 0
     MAX_TOKENS = -1
-    model_types = ModelType
 
     def __init__(self, model_name: str = None):
-        self.model_name = model_name or self.model_types.GPT4
-        self.model = ChatOpenAI(api_key=singularity_config.settings.OPEN_AI_KEY, model_name=self.model_name)
+        self.model_name = 'gpt-4'
+        self.model = ChatOpenAI(api_key='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', model_name=self.model_name)
 
     @abstractmethod
     def invoke(self, query: str, **kwargs):

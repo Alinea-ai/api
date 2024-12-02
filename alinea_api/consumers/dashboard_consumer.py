@@ -2,21 +2,16 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from alinea_api.models import Entity, AccessRequest, AccessRequestItem, User
+from alinea_api.models import Entity, AccessRequest, AccessRequestItem, CustomUser
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         print("WebSocket connect")
-
-        # Get the entity (e.g., entity with ID 1)
         entity = await self.get_dummy_entity()
         self.entity_id = entity.id
-
-        # Create the group name based on the entity ID
         self.group_name = f'entity_{self.entity_id}_group'
 
-        # Add the channel to the group
         await self.channel_layer.group_add(self.group_name, self.channel_name)
 
         await self.accept()
@@ -74,9 +69,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     def get_dummy_user(self):
         # Get or create a dummy user with pk=1
         try:
-            user = User.objects.get(pk=1)
-        except User.DoesNotExist:
-            user = User.objects.create_user(username='dummyuser', password='password')
+            user = CustomUser.objects.get(pk=1)
+        except CustomUser.DoesNotExist:
+            user = CustomUser.objects.create_user(username='dummyuser', password='password')
             print("Created dummy user.")
         return user
 

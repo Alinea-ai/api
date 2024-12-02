@@ -25,7 +25,5 @@ urlpatterns = [
     path('websocket-test/', websocket_test, name='websocket_test'),
     path('user_websocket_test/', access_requests_view, name='user_websocket_test' ),
 
-    path('approve_access_request_item/', set_access_request_item_status, name='approve_access_request_item'),
-    path('access_request_items/', get_access_request_items, name='get_access_request_items'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

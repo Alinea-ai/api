@@ -1,7 +1,8 @@
 from django.urls import path
 
-from singularity.views.campaigns import prospects
+from singularity.views.user import user_summary
 
 urlpatterns = [
-    path('campaign/prospects', prospects, name='campaigns'),
+    path('user/summary', user_summary, name='user_summary'),
+    path('user/query', user_summary, name='user_query'),
 ]
