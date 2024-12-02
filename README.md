@@ -41,7 +41,7 @@ python manage.py createsuperuser
 ```
 Follow the prompts to set up the superuser credentials.
 
-### 6. Start Redis Service
+### 6. Start Redis Service and mongoDB
 Redis is required for Django Channels to function properly.
 
 Install Redis (macOS)
@@ -56,6 +56,32 @@ brew install redis
 ```bash
 brew services start redis
 ```
+1. Install MongoDB on macOS
+
+### Install MongoDB via Homebrew
+If you have Homebrew installed, use the following commands:
+```
+brew tap mongodb/brew
+brew install mongodb-community@6.0
+```
+
+### Verify Installation
+Check if MongoDB is installed correctly:
+```
+mongod --version
+```
+### Start MongoDB
+Start the MongoDB service:
+```
+brew services start mongodb/brew/mongodb-community
+```
+### Stop MongoDB
+To stop the MongoDB service, use:
+```
+brew services stop mongodb/brew/mongodb-community
+```
+
+
 ### 7. Start the Server
 Start the Daphne server to run the application:
 
