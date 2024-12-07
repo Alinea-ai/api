@@ -26,6 +26,7 @@ urlpatterns = [
     path('singularity/', include('singularity.urls')),
     path('access/', include('alinea_api.urls.access_request')),
     path('serach/', include('alinea_api.urls.search_urls')),
+    path('visits/', include('alinea_api.urls.visist_urls')),
     path('websocket-test/', websocket_test, name='websocket_test'),
     path('user_websocket_test/', access_requests_view, name='user_websocket_test' ),
 
