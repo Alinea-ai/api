@@ -6,7 +6,7 @@ from .models import (
     Entity,
     AccessRequest,
     AccessRequestItem,
-    CustomUser,
+    CustomUser, Template,
 )
 from rest_framework import serializers
 
@@ -44,3 +44,10 @@ def serialize_document(doc):
         return doc.isoformat()  # Convert datetime to ISO format
     else:
         return doc
+
+
+class TemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Template
+        fields = ['id', 'entity_id', 'document_type', 'name', 'fields', 'version', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'version', 'created_at', 'updated_at']

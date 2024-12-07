@@ -20,8 +20,12 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('alinea_api.urls')),
+    path('entities/', include('alinea_api.urls.entity_urls')),
+    path('user/', include('alinea_api.urls.user_url')),
+    path('templates/', include('alinea_api.urls.templates_urls')),
     path('singularity/', include('singularity.urls')),
+    path('access/', include('alinea_api.urls.access_request')),
+    path('serach/', include('alinea_api.urls.search_urls')),
     path('websocket-test/', websocket_test, name='websocket_test'),
     path('user_websocket_test/', access_requests_view, name='user_websocket_test' ),
 

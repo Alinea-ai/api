@@ -9,8 +9,7 @@ class DocumentService:
         'personal_info',
         'medical_info',
         'dental_questionnaire',
-        'psychological_info',
-        'medical_records'
+        'psychological_info'
     ]
 
     def __init__(self, connection_uri: str, database_name: str):
