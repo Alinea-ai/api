@@ -2,6 +2,7 @@ import os
 import json
 from typing import Dict, Any
 
+from django.shortcuts import get_object_or_404
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 
@@ -9,6 +10,7 @@ from alinea_api.models import (
     AccessRequest,
     AccessRequestItem
 )
+from alinea_api.views.document import document_service
 
 from singularity.llms.open_ai import get_opneai
 
@@ -33,43 +35,29 @@ class UserService:
     def get_documents_summary(self, access_request_id: int) -> str:
         data_by_status: Dict[str, Any] = {'pending': [], 'approved': [], 'rejected': []}
 
-        # Fetch the access request object
-        try:
-            access_request_obj = AccessRequest.objects.get(id=access_request_id)
-        except AccessRequest.DoesNotExist:
-            return "Access request not found."
-
-        # Fetch all access request items related to the access request
+        if not access_request_id:
+            return ""
+        access_request_obj = get_object_or_404(AccessRequest, id=access_request_id)
+        data_by_status = {'pending': [], 'approved': [], 'rejected': []}
         access_requests = AccessRequestItem.objects.filter(access_request_id=access_request_id)
 
-        # Categorize data types by their status
         for access_request in access_requests:
-            if access_request.status in data_by_status:
-                data_by_status[access_request.status].append(access_request.data_type)
-            else:
-                # Handle unexpected statuses if necessary
-                pass
-
+            data_by_status[access_request.status].append(access_request.data_type)
         user = access_request_obj.user
-        approved_data: Dict[str, Any] = {}
-
-        # Serialize approved data
+        user_doc = document_service.find_user_by_user_id(user.id)
+        if not user_doc:
+            return "no info found for user"
+        data = {}
         for data_type in data_by_status['approved']:
-            model_serializer = self.DATA_TYPE_MODEL_SERIALIZER_MAP.get(data_type)
-            if model_serializer:
-                model_class, serializer_class = model_serializer
-                try:
-                    instance = model_class.objects.get(user_id=user.id)
-                    serializer = serializer_class(instance)
-                    approved_data[data_type] = serializer.data
-                except model_class.DoesNotExist:
-                    approved_data[data_type] = None
-
-        data_by_status["approved"] = approved_data
+            if data_type in user_doc:
+                data[data_type] = user_doc[data_type]
+            else:
+                data[data_type] = None
+        data_by_status["approved"] = data
 
         # Create a LangChain prompt and generate the summary
         try:
-            summary = self._generate_summary(str(approved_data))
+            summary = self._generate_summary(str(data_by_status))
         except Exception as e:
             # Handle exceptions such as API errors
             return f"An error occurred while generating the summary: {str(e)}"

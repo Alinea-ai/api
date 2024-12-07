@@ -1,8 +1,10 @@
+# your_app/urls.py
+
 from django.urls import path
 
-from singularity.views.user import user_summary
+from singularity.views.user import UserSummaryView, UserQueryView
 
 urlpatterns = [
-    path('user/summary', user_summary, name='user_summary'),
-    path('user/query', user_summary, name='user_query'),
+    path('user/summary/', UserSummaryView.as_view(), name='user_summary'),
+    path('user/query/', UserQueryView.as_view(), name='user_query'),  # Corrected to UserQueryView
 ]
