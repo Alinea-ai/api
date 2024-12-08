@@ -8,9 +8,7 @@ from .models import (
     AccessRequestItem,
     Visits,
     Template,
-    DefaultField,
-    # Ensure CustomUser is imported if not using get_user_model()
-    # CustomUser
+    DefaultField, UserTemplateAssignment,
 )
 
 User = get_user_model()  # This returns your CustomUser model
@@ -35,3 +33,10 @@ admin.site.register(AccessRequestItem)
 admin.site.register(Visits)
 admin.site.register(Template)
 admin.site.register(DefaultField)
+
+@admin.register(UserTemplateAssignment)
+class UserTemplateAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'template', 'entity', 'assigned_at', 'status')
+    search_fields = ('user__username', 'template__name', 'entity__name')
+    list_filter = ('status', 'assigned_at', 'entity')
+    ordering = ('entity', 'user', 'template')

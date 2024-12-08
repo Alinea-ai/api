@@ -1,7 +1,9 @@
-from django.urls import path
+# yourapp/urls.py
 
-from alinea_api.views.template import TemplateView
+from django.urls import path
+from ..views.template import TemplateListCreateView, TemplateDetailView
 
 urlpatterns = [
-    path('templates/', TemplateView.as_view(), name='templates'),
+    path('', TemplateListCreateView.as_view(), name='template_list_create'),
+    path('<int:id>/', TemplateDetailView.as_view(), name='template_detail'),
 ]

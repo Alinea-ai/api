@@ -7,3 +7,6 @@ def websocket_test(request):
 
 def access_requests_view(request):
     return render(request, 'user_dashboard.html')
+
+def template_builder_view(request):
+    return render(request, 'template.html')

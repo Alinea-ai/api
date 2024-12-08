@@ -6,7 +6,7 @@ from rest_framework import permissions
 
 from alinea_api.views.access_request_item import set_access_request_item_status, \
     get_access_request_items
-from alinea_api.views.test import websocket_test, access_requests_view
+from alinea_api.views.test import websocket_test, access_requests_view, template_builder_view
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -27,8 +27,13 @@ urlpatterns = [
     path('access/', include('alinea_api.urls.access_request')),
     path('serach/', include('alinea_api.urls.search_urls')),
     path('visits/', include('alinea_api.urls.visist_urls')),
+    path('defaultfields/', include('alinea_api.urls.default_fields')),
+    path('assignments/', include('alinea_api.urls.user_template_assignment_urls')),
+
+
     path('websocket-test/', websocket_test, name='websocket_test'),
     path('user_websocket_test/', access_requests_view, name='user_websocket_test' ),
+    path('template_builder/', template_builder_view, name="template_builder"),
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

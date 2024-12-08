@@ -101,7 +101,7 @@ class Template(models.Model):
     name = models.CharField(max_length=255, blank=True)
 
     class Meta:
-        unique_together = ('entity', 'document_type', 'version')
+        unique_together = ('entity', 'document_type', 'name')
 
     def __str__(self):
         return f"{self.entity.name} - {self.document_type} (v{self.version})"
@@ -133,3 +133,25 @@ class DefaultField(models.Model):
 
     def __str__(self):
         return f"{self.field_name} ({self.document_type})"
+
+
+class UserTemplateAssignment(models.Model):
+    STATUS_CHOICES = [
+        ('assigned', 'Assigned'),
+        ('completed', 'Completed'),
+        ('in_progress', 'In Progress'),
+        ('declined', 'Declined'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='template_assignments')
+    template = models.ForeignKey('Template', on_delete=models.CASCADE,
+                                 related_name='user_assignments')
+    entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='user_assignments')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='assigned')
+
+    class Meta:
+        unique_together = ('user', 'template', 'entity')  # Prevent duplicate assignments
+
+    def __str__(self):
+        return f"{self.template.name} assigned to {self.user.username} ({self.entity.name})"
